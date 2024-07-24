@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Orleans.Runtime" />
+		<PackageReference Include="Microsoft.Orleans.Server" />
+		<PackageReference Include="Microsoft.Orleans.Sdk" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\Common\Talepreter.Common.RabbitMQ\Talepreter.Common.RabbitMQ.csproj" />
+		<ProjectReference Include="..\..\Contracts\Talepreter.Contracts.Orleans.Grains\Talepreter.Contracts.Orleans.Grains.csproj" />
+		<ProjectReference Include="..\..\Contracts\Talepreter.Contracts\Talepreter.Contracts.csproj" />
+		<ProjectReference Include="..\..\DB\Talepreter.BaseTypes\Talepreter.BaseTypes.csproj" />
+	</ItemGroup>
+
+</Project>
