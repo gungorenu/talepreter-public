@@ -117,49 +117,46 @@ namespace Talepreter.AnecdoteSvc.Grains
             token.ThrowIfCancellationRequested();
 
             // use case for below is like an event some actors learned/witnessed but then sharing it with others in further pages, which could be in same chapter, then the notes would be merged as much as possible. visualization will be cluttered with so many entries "I think"
-            if (!string.IsNullOrEmpty(command.Comments))
+            // validate actors, if they really exist or not
+            if (command.ArrayParameters != null && command.ArrayParameters?.Length > 0)
             {
-                // validate actors, if they really exist or not
-                if (command.ArrayParameters != null && command.ArrayParameters?.Length > 0)
-                {
-                    var actorList = command.ArrayParameters?.ToArray() ?? [];
-                    var actors = await dbContext.PluginRecords.OfTale(command).Where(x => x.Type == CommandIds.Actor && actorList.Contains(x.BaseId))
-                        .Select(x => x.BaseId).ToArrayAsync(token);
-                    if (actorList.Any(x => !actors.Contains(x))) throw new CommandExecutionBlockedException(command, $"Some mentioned actors do not exist");
-                }
+                var actorList = command.ArrayParameters?.ToArray() ?? [];
+                var actors = await dbContext.PluginRecords.OfTale(command).Where(x => x.Type == CommandIds.Actor && actorList.Contains(x.BaseId))
+                    .Select(x => x.BaseId).ToArrayAsync(token);
+                if (actorList.Any(x => !actors.Contains(x))) throw new CommandExecutionBlockedException(command, $"Some mentioned actors do not exist");
+            }
 
-                var entry = anecdote.Entries.List.FirstOrDefault(x => x.Chapter == command.ChapterId); // we merge entries from same chapter
-                if (entry != null) // merge entries
+            var entry = anecdote.Entries.List.FirstOrDefault(x => x.Chapter == command.ChapterId); // we merge entries from same chapter
+            if (entry != null) // merge entries
+            {
+                entry.Content = $"{entry.Content}\r\n{command.Comments}".Trim(); // merge, but can be empty
+                entry.Page = command.PageId; // this is a decision I took, we only merge same chapter stuff but adding two commands in same page made little sense for me, so I merge same chapter records
+            }
+            else // new entry
+            {
+                entry = new MentionEntry
                 {
-                    entry.Content = $"{entry.Content}\r\n{command.Comments}".Trim(); // merge, but can be empty
-                    entry.Page = command.PageId; // this is a decision I took, we only merge same chapter stuff but adding two commands in same page made little sense for me, so I merge same chapter records
-                }
-                else // new entry
-                {
-                    entry = new MentionEntry
-                    {
-                        Content = command.Comments,
-                        Chapter = command.ChapterId,
-                        Actors = [],
-                        Page = command.PageId
-                    };
-                    anecdote.Entries.List.Add(entry);
-                }
+                    Content = command.Comments,
+                    Chapter = command.ChapterId,
+                    Actors = [],
+                    Page = command.PageId
+                };
+                anecdote.Entries.List.Add(entry);
+            }
 
-                entry.Location = location ?? entry.Location;
-                if (date != 0L)
-                {
-                    if (entry.Date != null && entry.Date > date) throw new CommandExecutionException(command, "Anecdote mention date cannot be in past");
-                    entry.Date = date;
-                }
+            entry.Location = location ?? entry.Location;
+            if (date != 0L)
+            {
+                if (entry.Date != null && entry.Date > date) throw new CommandExecutionException(command, "Anecdote mention date cannot be in past");
+                entry.Date = date;
+            }
 
-                // merge actor entries if there is any
-                var entryActors = new List<string>();
-                if (command.ArrayParameters != null)
-                {
-                    foreach (var actor in command.ArrayParameters) if (!entry.Actors.Contains(actor)) entryActors.Add(actor);
-                    entry.Actors = [.. entryActors];
-                }
+            // merge actor entries if there is any
+            var entryActors = new List<string>();
+            if (command.ArrayParameters != null)
+            {
+                foreach (var actor in command.ArrayParameters) if (!entry.Actors.Contains(actor)) entryActors.Add(actor);
+                entry.Actors = [.. entryActors];
             }
 
             return anecdote;

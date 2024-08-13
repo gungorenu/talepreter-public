@@ -34,7 +34,7 @@ namespace Talepreter.TaleSvc.Grains
             if (State.Status != ControllerGrainStatus.Executed &&
                 State.Status != ControllerGrainStatus.Published &&
                 State.Status != ControllerGrainStatus.Idle) return Task.FromResult(new ChapterPagePair { Chapter = -1, Page = -1 });
-            return Task.FromResult(State.LastExecutedPage);
+            return Task.FromResult(State.LastExecutedPage.Clone());
         }
 
         public async Task Initialize(Guid taleId, Guid taleVersionId, Guid writerId, DateTime operationTime)
@@ -500,7 +500,7 @@ namespace Talepreter.TaleSvc.Grains
             await Task.WhenAll(task1(), task2(), task3(), task4());
 
             var target = GrainFactory.FetchPublish(State.TaleId, newVersionId);
-            await target.BackupFrom(State.TaleId, newVersionId, writerId, operationTime, State.LastExecutedPage);
+            await target.BackupFrom(State.TaleId, newVersionId, writerId, operationTime, State.LastExecutedPage.Clone());
             ctx.Debug($"used version data to backup over {newVersionId}");
         }
 
@@ -516,15 +516,15 @@ namespace Talepreter.TaleSvc.Grains
                     state.ExecuteResults[c] = ExecutionResult.Success;
                 }
 
-                var chapterGrain = GrainFactory.FetchChapter(taleId, taleVersionId, lastExecuted.Chapter);
-                await chapterGrain.Initialize(taleId, taleVersionId, writerId, lastUpdated, lastExecuted.Chapter);
+                var chapterGrain = GrainFactory.FetchChapter(taleId, taleVersionId, lastExecuted.Chapter ?? 0);
+                await chapterGrain.Initialize(taleId, taleVersionId, writerId, lastUpdated, lastExecuted.Chapter ?? 0);
 
                 state.TaleId = taleId;
                 state.TaleVersionId = taleVersionId;
                 state.WriterId = writerId;
                 state.LastUpdate = lastUpdated;
                 state.Status = ControllerGrainStatus.Executed;
-                state.LastExecutedPage = lastExecuted;
+                state.LastExecutedPage = lastExecuted.Clone();
             });
             ctx.Debug($"initialized from backup");
         }

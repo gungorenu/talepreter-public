@@ -19,7 +19,7 @@ namespace Talepreter.TaleSvc.Grains.GrainStates
                 [typeof(IPersonContainerGrain).Name] = PublishResult.None,
                 [typeof(IWorldContainerGrain).Name] = PublishResult.None
             };
-            LastExecutedPage = new ChapterPagePair() { Chapter = -1, Page = -1 };
+            LastExecutedPage = new ChapterPagePair() { Chapter = null, Page = null };
         }
 
         [Id(0)]
