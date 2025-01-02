@@ -44,6 +44,7 @@ namespace Talepreter.Common
             _token = token;
             _token.ThrowIfCancellationRequested();
             _countDown = new CountdownEvent(_workToDo.Count);
+            if (_workToDo.IsEmpty) return;
             for (int i = 0; i < _parallelCount; i++)
             {
                 _token.ThrowIfCancellationRequested();

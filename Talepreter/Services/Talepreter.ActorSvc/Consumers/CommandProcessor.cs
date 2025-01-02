@@ -39,7 +39,6 @@ namespace Talepreter.ActorSvc.Consumers
                     var triggers = await dbContext.GetActiveTriggersBefore(command.TaleId, command.TaleVersionId, currentDate).ToArrayAsync(token);
                     commands.AddRange(triggers.Select(command.MapTrigger));
                     break;
-                case CommandIds.Settlement:
                 case CommandIds.Actor:
                 case CommandIds.ActorTrait:
                     commands.Add(command.Map());
@@ -67,10 +66,6 @@ namespace Talepreter.ActorSvc.Consumers
                     if (command.Parent == null) throw new CommandValidationException(command, "ACTORTRAIT command has no parent set");
                     command.GrainType = typeof(IActorTraitGrain).Name;
                     command.GrainId = GrainFetcher.FetchActorTrait(command.TaleId, command.TaleVersionId, command.Target);
-                    break;
-                case CommandIds.Settlement:
-                    command.GrainType = typeof(IActorPluginGrain).Name;
-                    command.GrainId = GrainFetcher.FetchSettlement(command.TaleId, command.TaleVersionId, command.Target);
                     break;
                 case CommandIds.Trigger: break; // these are already set when triggers are created
                 default: throw new InvalidOperationException($"Actor svc does not know how to set grain for command {command.Tag}");

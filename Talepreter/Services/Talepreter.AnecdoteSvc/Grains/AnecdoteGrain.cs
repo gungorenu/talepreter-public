@@ -152,7 +152,7 @@ namespace Talepreter.AnecdoteSvc.Grains
             }
 
             // merge actor entries if there is any
-            var entryActors = new List<string>();
+            var entryActors = new List<string>(entry.Actors);
             if (command.ArrayParameters != null)
             {
                 foreach (var actor in command.ArrayParameters) if (!entry.Actors.Contains(actor)) entryActors.Add(actor);
